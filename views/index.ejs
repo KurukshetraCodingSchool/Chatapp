@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatApp</title>
+  <link rel="stylesheet" href="../stylesheets/style.css">
+</head>
+<body>
+  <h1>Chatapp</h1>
+<div class="coversionArea">
+  <div class="messages"></div>
+  <div class="inputs">
+    <input type="text" placeholder="Type A Message">
+    <button>Send</button>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  function incomingMessage(msg) {
+    document.querySelector('.messages').innerHTML+=`<div class="msg incomingMessage">${msg}</div>`
+  }
+  function outgoingMessage(msg) {
+    document.querySelector('.messages').innerHTML+=`<div class="msg outgoingMessage">${msg}</div>`
+  }
+
+  // input field clear nhi hogi
+  // document.querySelector('button').addEventListener('click',(e)=>{
+  //   const msg=document.querySelector('input').value
+  //   outgoingMessage(msg)
+  //   socket.emit('newmsg',msg)
+  // })
+
+// input field clear karne ke liye
+  document.querySelector('button').addEventListener('click', (e) => {
+  const input = document.querySelector('input');
+  const msg = input.value.trim(); // trim se only space wale msg nhi bhijenge
+
+  if (msg !== '') {
+    outgoingMessage(msg);
+    socket.emit('newmsg', msg);
+    input.value = ''; // ✅ Input field clear karne wali line
+  }
+});
+
+  socket.on('incomingMessage',(message)=>{
+    incomingMessage(message);
+  })
+</script>
+</body>
+</html>
