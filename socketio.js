@@ -6,20 +6,12 @@ const socketapi = {
 // lOgic
 io.on('connection',async function(socket){
     console.log("new user conneted");
-    const messages = await Message.find().sort({timestamp:1}).limit(50);
-
-    messages.forEach(msg=>{
-        socket.emit('incomingMessage',msg.content);
+    socket.on("sony",(msg)=>{
+        console.log(msg)
+        socket.broadcast.to(msg.roomName).emit('incomingMessage',msg)
     })
-
-    socket.on('newmsg',async msg=>{
-        // console.log(msg);
-        socket.broadcast.emit('incomingMessage',msg)
-
-         // save to mongodb
-    const message = new Message({content:msg})
-    await message.save();
+    socket.on('joinRoom',roomName=>{
+        socket.join(roomName);
     })
-   
 })
 module.exports = socketapi;

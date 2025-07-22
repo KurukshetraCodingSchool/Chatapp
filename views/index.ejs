@@ -8,45 +8,62 @@
 </head>
 <body>
   <h1>Chatapp</h1>
+  <button id="joinRoom" onclick="joinRoom()">Join new Room</button>
 <div class="coversionArea">
   <div class="messages"></div>
   <div class="inputs">
     <input type="text" placeholder="Type A Message">
-    <button>Send</button>
+    <button onclick="sendMessage()">Send</button>
   </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
   const socket = io();
-  function incomingMessage(msg) {
-    document.querySelector('.messages').innerHTML+=`<div class="msg incomingMessage">${msg}</div>`
-  }
-  function outgoingMessage(msg) {
-    document.querySelector('.messages').innerHTML+=`<div class="msg outgoingMessage">${msg}</div>`
+  let roomName = null; // ❗ Changed from const to let
+  const username = prompt('Enter your Username');
+  console.log(username);
+
+  function joinRoom() {
+    roomName = prompt('Enter Room Name');
+    socket.emit('joinRoom', roomName);
   }
 
-  // input field clear nhi hogi
-  // document.querySelector('button').addEventListener('click',(e)=>{
-  //   const msg=document.querySelector('input').value
-  //   outgoingMessage(msg)
-  //   socket.emit('newmsg',msg)
-  // })
- const input = document.querySelector('input');
-  const button = document.querySelector('button');
+  function incomingMessage(msg) {
+    document.querySelector('.messages').innerHTML += `
+      <div class="msg incomingMessage">
+        <div class="username">${msg.username}</div>
+        <div class="data">${msg.msg}</div>
+      </div>`;
+  }
+
+  function outgoingMessage(msg) {
+    document.querySelector('.messages').innerHTML += `
+      <div class="msg outgoingMessage">
+        <div class="username">${msg.username}</div>
+        <div class="data">${msg.msg}</div>
+      </div>`;
+  }
+
+  const input = document.querySelector('input');
+  const sendButton = document.querySelector('.inputs button'); // ✅ Better targeting
 
   function sendMessage() {
     const msg = input.value.trim();
-    if (msg !== '') {
-      outgoingMessage(msg);
-      socket.emit('newmsg', msg);
-      input.value = '';
-    }
+    if (!msg) return;
+
+    const MessagePocket = {
+      username,
+      msg,
+      roomName
+    };
+
+    outgoingMessage(MessagePocket);
+    socket.emit('sony', MessagePocket);
+    input.value = '';
   }
 
-  // ✅ Click event
-  button.addEventListener('click', sendMessage);
+  sendButton.addEventListener('click', sendMessage);
 
-  // ✅ Enter key event
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       sendMessage();
@@ -57,6 +74,7 @@
     incomingMessage(message);
   });
 </script>
+
 
 </body>
 </html>
