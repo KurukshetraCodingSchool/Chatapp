@@ -30,20 +30,32 @@
 
   function incomingMessage(msg) {
     document.querySelector('.messages').innerHTML += `
-      <div class="msg incomingMessage">
+      <div class="msg incomingMessage" id="${msg._id}" onclick="deleteMessage('${msg._id}')">
         <div class="username">${msg.username}</div>
         <div class="data">${msg.msg}</div>
+        <div class="time">${formatTime(msg.timestamp)}</div>
       </div>`;
   }
 
   function outgoingMessage(msg) {
     document.querySelector('.messages').innerHTML += `
-      <div class="msg outgoingMessage">
+      <div class="msg outgoingMessage" id="${msg._id.to}" onclick="deleteMessage('${msg._id}')>
         <div class="username">${msg.username}</div>
         <div class="data">${msg.msg}</div>
+        <div class="time">${formatTime(msg.timestamp)}</div>
       </div>`;
   }
 
+  function deleteMessage(id){
+    if(confirm("Delete This Message?")){
+      socket.emit('deleteMessage',id);
+      document.getElementById(id).remove(); // remove from frontend
+    }
+  }
+  function formatTime(isoString){
+    const date = new Date (isoString)
+    return `${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
+  }
   const input = document.querySelector('input');
   const sendButton = document.querySelector('.inputs button'); // ✅ Better targeting
 
