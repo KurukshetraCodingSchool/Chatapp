@@ -7,9 +7,7 @@ const chatappSchema = mongoose.Schema({
     username:String,
     msg:String,
     roomName:String,
-    timestamp:{
-        type:Date,
-        default:Date.now
-    }
+},{
+    timestamps:true
 })
 module.exports =mongoose.model('Chats',chatappSchema);

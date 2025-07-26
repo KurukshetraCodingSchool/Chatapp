@@ -12,7 +12,6 @@ io.on('connection', async function (socket) {
         // sends past 100 msg 
         const messages = await Message.find({ roomName }).sort({ timestamp: 1 }).limit(100);
         messages.forEach((msg) => {
-            1
             socket.emit('incomingMessage', msg);// send the history to joined user
         });
     });
@@ -35,9 +34,10 @@ io.on('connection', async function (socket) {
         // console.log(msg)
         // save the messages
         const newmsg = new Message(msg);
-        await newmsg.save();
+        const savedmsg = await newmsg.save();
+        // socket.broadcast.to(msg.roomName).emit('incomingMessage', msg)
+        io.to(msg.roomName).emit('incomingMessage',savedmsg)// ensure timestamp is valid
+});
 
-        socket.broadcast.to(msg.roomName).emit('incomingMessage', msg)
-    })
 })
 module.exports = socketapi;

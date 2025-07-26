@@ -1,92 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ChatApp</title>
-  <link rel="stylesheet" href="../stylesheets/style.css">
+  <link rel="stylesheet" href="../stylesheets/style.css" />
 </head>
 <body>
-  <h1>Chatapp</h1>
-  <button id="joinRoom" onclick="joinRoom()">Join new Room</button>
-<div class="coversionArea">
-  <div class="messages"></div>
-  <div class="inputs">
-    <input type="text" placeholder="Type A Message">
-    <button onclick="sendMessage()">Send</button>
+  <h1>ChatApp</h1>
+  <button id="joinRoom" onclick="joinRoom()">Join New Room</button>
+
+  <div class="coversionArea">
+    <div class="messages"></div>
+    <div class="inputs">
+      <input type="text" placeholder="Type a message" />
+      <button>Send</button>
+    </div>
   </div>
-</div>
-<script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
-  let roomName = null; // ❗ Changed from const to let
-  const username = prompt('Enter your Username');
-  console.log(username);
 
-  function joinRoom() {
-    roomName = prompt('Enter Room Name');
-    socket.emit('joinRoom', roomName);
-  }
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let roomName = null;
+    const username = prompt('Enter your Username');
 
-  function incomingMessage(msg) {
-    document.querySelector('.messages').innerHTML += `
-      <div class="msg incomingMessage" id="${msg._id}" onclick="deleteMessage('${msg._id}')">
-        <div class="username">${msg.username}</div>
-        <div class="data">${msg.msg}</div>
-        <div class="time">${formatTime(msg.timestamp)}</div>
-      </div>`;
-  }
+    const input = document.querySelector('input');
+    const sendButton = document.querySelector('.inputs button');
+    const messagesDiv = document.querySelector('.messages');
 
-  function outgoingMessage(msg) {
-    document.querySelector('.messages').innerHTML += `
-      <div class="msg outgoingMessage" id="${msg._id.to}" onclick="deleteMessage('${msg._id}')>
-        <div class="username">${msg.username}</div>
-        <div class="data">${msg.msg}</div>
-        <div class="time">${formatTime(msg.timestamp)}</div>
-      </div>`;
-  }
-
-  function deleteMessage(id){
-    if(confirm("Delete This Message?")){
-      socket.emit('deleteMessage',id);
-      document.getElementById(id).remove(); // remove from frontend
+    function joinRoom() {
+      roomName = prompt('Enter Room Name');
+      messagesDiv.innerHTML = ''; // Clear old messages
+      socket.emit('joinRoom', roomName);
     }
-  }
-  function formatTime(isoString){
-    const date = new Date (isoString)
-    return `${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
-  }
-  const input = document.querySelector('input');
-  const sendButton = document.querySelector('.inputs button'); // ✅ Better targeting
 
-  function sendMessage() {
-    const msg = input.value.trim();
-    if (!msg) return;
-
-    const MessagePocket = {
-      username,
-      msg,
-      roomName
-    };
-
-    outgoingMessage(MessagePocket);
-    socket.emit('sony', MessagePocket);
-    input.value = '';
-  }
-
-  sendButton.addEventListener('click', sendMessage);
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
+    function formatTime(isoString) {
+      const date = new Date(isoString);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
     }
-  });
 
-  socket.on('incomingMessage', (message) => {
-    incomingMessage(message);
-  });
-</script>
+    function incomingMessage(msg) {
+  const isOwnMessage = msg.username === username;
 
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `msg ${isOwnMessage ? 'outgoingMessage' : 'incomingMessage'}`;
+  messageDiv.id = msg._id;
+  messageDiv.onclick = () => deleteMessage(msg._id);
 
+  messageDiv.innerHTML = `
+    <div class="username">${msg.username}</div>
+    <div class="data">${msg.msg}</div>
+    <div class="time">${formatTime(msg.createdAt)}</div>
+  `;
+
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll
+    }
+    function sendMessage() {
+      const msg = input.value.trim();
+      if (!msg || !roomName) return;
+
+      const messageObject = {
+        username,
+        msg,
+        roomName
+      };
+
+      socket.emit('sony', messageObject); // Send to server
+      input.value = '';
+    }
+
+    function deleteMessage(id) {
+      if (confirm("Delete This Message?")) {
+        socket.emit('deleteMessage', id);
+        const messageElem = document.getElementById(id);
+        if (messageElem) messageElem.remove();
+      }
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    socket.on('incomingMessage', (message) => {
+      incomingMessage(message);
+    });
+
+    socket.on('messageDeleted', (id) => {
+      const messageElem = document.getElementById(id);
+      if (messageElem) messageElem.remove();
+    });
+  </script>
 </body>
 </html>
